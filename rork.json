@@ -1,0 +1,9 @@
+{
+  "apps": [
+    {
+      "name": "Dinner Party",
+      "path": "ios",
+      "framework": "swift"
+    }
+  ]
+}
