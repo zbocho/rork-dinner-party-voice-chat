@@ -1,18 +1,5 @@
 import Foundation
 
-nonisolated struct SummaryRequest: Codable, Sendable {
-    let messages: [SummaryMessage]
-}
-
-nonisolated struct SummaryMessage: Codable, Sendable {
-    let role: String
-    let content: String
-}
-
-nonisolated struct SummaryResponse: Codable, Sendable {
-    let text: String
-}
-
 final class SummaryService {
     private let toolkitURL: String
 
@@ -33,9 +20,7 @@ final class SummaryService {
 
         for msg in messages {
             let timeAgo = formatter.localizedString(for: msg.date, relativeTo: Date())
-            let mins = Int(msg.duration / 60)
-            let secs = Int(msg.duration.truncatingRemainder(dividingBy: 60))
-            let durationStr = mins > 0 ? "\(mins)m \(secs)s" : "\(secs)s"
+            let durationStr = msg.duration.formattedMinsSecs
             conversationDescription += "- \(msg.sender) sent a \(durationStr) voice message \(timeAgo)\n"
         }
 
@@ -58,39 +43,16 @@ final class SummaryService {
                 return nil
             }
 
-            let text = String(data: data, encoding: .utf8)
-            return text
-        } catch {
-            return nil
-        }
-    }
-
-    func generateSummarySimple(messageDescriptions: String) async -> String? {
-        let baseURL = toolkitURL.isEmpty ? "https://toolkit.rork.com" : toolkitURL
-        guard let url = URL(string: "\(baseURL)/agent/chat") else { return nil }
-
-        let prompt = """
-        Summarize this voice conversation in warm, natural prose. Max 150 words. Not bullet points. Write as if catching a friend up on what's been discussed so far. Cover what's been talked about, where things stand, and any open questions.
-
-        \(messageDescriptions)
-        """
-
-        let requestMessages: [[String: String]] = [
-            ["role": "user", "content": prompt]
-        ]
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let body: [String: Any] = ["messages": requestMessages]
-
-        do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: body)
-            let (data, _) = try await URLSession.shared.data(for: request)
+            // Try parsing as JSON with a "text" field first
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let text = json["text"] as? String {
+                return text
+            }
+            // Fall back to raw string
             return String(data: data, encoding: .utf8)
         } catch {
             return nil
         }
     }
+
 }

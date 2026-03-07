@@ -26,12 +26,8 @@ class MessagesViewController: MSMessagesAppViewController {
             return
         }
 
-        let messagesView = MessagesView(
-            onRequestExpand: { [weak self] in
-                self?.requestPresentationStyle(.expanded)
-            }
-        )
-        .modelContainer(container)
+        let messagesView = MessagesView()
+            .modelContainer(container)
 
         let hosting = UIHostingController(rootView: messagesView)
         hosting.view.backgroundColor = .clear
@@ -49,11 +45,4 @@ class MessagesViewController: MSMessagesAppViewController {
         hostingController = hosting
     }
 
-    override func willTransition(to presentationStyle: MSMessagesAppPresentationStyle) {
-        super.willTransition(to: presentationStyle)
-    }
-
-    override func didTransition(to presentationStyle: MSMessagesAppPresentationStyle) {
-        super.didTransition(to: presentationStyle)
-    }
 }

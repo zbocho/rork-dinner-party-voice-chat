@@ -9,15 +9,11 @@ struct VoiceMessageRow: View {
     let onTap: () -> Void
 
     private var formattedDuration: String {
-        let mins = Int(message.duration) / 60
-        let secs = Int(message.duration) % 60
-        return String(format: "%d:%02d", mins, secs)
+        message.duration.formattedMinsSecs
     }
 
     private var formattedCurrentTime: String {
-        let mins = Int(currentTime) / 60
-        let secs = Int(currentTime) % 60
-        return String(format: "%d:%02d", mins, secs)
+        currentTime.formattedMinsSecs
     }
 
     private var timeLabel: String {
