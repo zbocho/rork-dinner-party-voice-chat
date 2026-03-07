@@ -11,24 +11,13 @@ struct RecordingOverlay: View {
 
     private var formattedDuration: String {
         let d = hasPendingRecording ? pendingDuration : duration
-        return d.formattedMinsSecs
+        let mins = Int(d) / 60
+        let secs = Int(d) % 60
+        return String(format: "%d:%02d", mins, secs)
     }
 
     var body: some View {
         VStack(spacing: 32) {
-            HStack {
-                Spacer()
-                Button(action: onCancel) {
-                    Image(systemName: "xmark")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.white.opacity(0.6))
-                        .frame(width: 36, height: 36)
-                        .background(.white.opacity(0.1))
-                        .clipShape(Circle())
-                }
-                .padding(.trailing, 20)
-                .padding(.top, 16)
-            }
             Spacer()
 
             VStack(spacing: 16) {
