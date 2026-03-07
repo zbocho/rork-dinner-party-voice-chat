@@ -60,8 +60,8 @@ struct ConversationView: View {
 
             if showRecordingOverlay {
                 RecordingOverlay(
-                    duration: viewModel.recorder.recordingDuration,
-                    isPastFiveMinutes: viewModel.recorder.isPastFiveMinutes,
+                    duration: viewModel.recordingDuration,
+                    isPastFiveMinutes: viewModel.isPastFiveMinutes,
                     hasPendingRecording: viewModel.hasPendingRecording,
                     pendingDuration: viewModel.pendingRecordingDuration,
                     onStop: {

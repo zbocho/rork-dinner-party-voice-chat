@@ -9,6 +9,4 @@ import Foundation
 
 enum Config {
     static let EXPO_PUBLIC_TOOLKIT_URL = ""
-    static let defaultParticipantName = "Friend"
-    static let currentUserName = "You"
 }
