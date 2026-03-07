@@ -6,9 +6,6 @@ import SwiftUI
 final class ConversationViewModel {
     var conversation: Conversation?
     var messages: [VoiceMessage] = []
-    var isRecording: Bool = false
-    var recordingDuration: TimeInterval = 0
-    var isPastFiveMinutes: Bool = false
     var hasPendingRecording: Bool = false
     var pendingRecordingDuration: TimeInterval = 0
     var isGeneratingSummary: Bool = false
@@ -33,7 +30,7 @@ final class ConversationViewModel {
         if let existing = try? modelContext.fetch(descriptor).first {
             conversation = existing
         } else {
-            let newConversation = Conversation(participantName: "Friend")
+            let newConversation = Conversation(participantName: Config.defaultParticipantName)
             modelContext.insert(newConversation)
             conversation = newConversation
         }
@@ -46,29 +43,22 @@ final class ConversationViewModel {
             predicate: #Predicate { $0.conversationID == conversationID },
             sortBy: [SortDescriptor(\.createdAt)]
         )
-        messages = (try? modelContext.fetch(descriptor)) ?? []
+        do {
+            messages = try modelContext.fetch(descriptor)
+        } catch {
+            print("Failed to load messages: \(error)")
+            messages = []
+        }
     }
 
     @discardableResult
     func startRecording() async -> Bool {
         let success = await recorder.startRecording()
         if success {
-            isRecording = true
             hasPendingRecording = false
             pendingRecordingResult = nil
-            observeRecorder()
         }
         return success
-    }
-
-    private func observeRecorder() {
-        Task {
-            while recorder.isRecording {
-                recordingDuration = recorder.recordingDuration
-                isPastFiveMinutes = recorder.isPastFiveMinutes
-                try? await Task.sleep(for: .milliseconds(100))
-            }
-        }
     }
 
     func stopRecording() {
@@ -77,9 +67,6 @@ final class ConversationViewModel {
             pendingRecordingDuration = result.duration
             hasPendingRecording = true
         }
-        isRecording = false
-        recordingDuration = 0
-        isPastFiveMinutes = false
     }
 
     func cancelRecording() {
@@ -92,9 +79,6 @@ final class ConversationViewModel {
             pendingRecordingDuration = 0
         } else {
             recorder.cancelRecording()
-            isRecording = false
-            recordingDuration = 0
-            isPastFiveMinutes = false
         }
     }
 
@@ -105,7 +89,7 @@ final class ConversationViewModel {
 
         let message = VoiceMessage(
             conversationID: conversation.id,
-            senderName: "You",
+            senderName: Config.currentUserName,
             isMine: true,
             duration: result.duration,
             audioFileName: result.fileName
@@ -142,19 +126,11 @@ final class ConversationViewModel {
 
         Task {
             if let summary = await summaryService.generateSummary(messages: messageData) {
-                let cleaned = summary
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                    .replacingOccurrences(of: "\"", with: "")
-                conversation?.summary = cleaned
+                conversation?.summary = summary.trimmingCharacters(in: .whitespacesAndNewlines)
                 conversation?.summaryUpdatedAt = Date()
             }
             isGeneratingSummary = false
         }
     }
 
-    func formattedDuration(_ duration: TimeInterval) -> String {
-        let mins = Int(duration) / 60
-        let secs = Int(duration) % 60
-        return String(format: "%d:%02d", mins, secs)
-    }
 }

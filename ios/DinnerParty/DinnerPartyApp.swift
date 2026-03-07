@@ -3,7 +3,9 @@ import SwiftData
 
 @main
 struct DinnerPartyApp: App {
-    var sharedModelContainer: ModelContainer = {
+    let sharedModelContainer: ModelContainer
+
+    init() {
         let schema = Schema([
             Conversation.self,
             VoiceMessage.self,
@@ -11,11 +13,14 @@ struct DinnerPartyApp: App {
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            sharedModelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            // Fall back to in-memory storage so the app still launches
+            print("Failed to create persistent ModelContainer: \(error). Falling back to in-memory storage.")
+            let fallbackConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            sharedModelContainer = try! ModelContainer(for: schema, configurations: [fallbackConfig])
         }
-    }()
+    }
 
     var body: some Scene {
         WindowGroup {

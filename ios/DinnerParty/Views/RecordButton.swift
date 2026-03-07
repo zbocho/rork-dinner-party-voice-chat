@@ -17,7 +17,7 @@ struct RecordButton: View {
                 }
 
                 Circle()
-                    .fill(isRecording ? Theme.wine : Theme.wine)
+                    .fill(Theme.wine)
                     .frame(width: 64, height: 64)
                     .shadow(color: Theme.wine.opacity(0.3), radius: isRecording ? 12 : 4, y: 2)
 
