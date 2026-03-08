@@ -1,0 +1,51 @@
+require "base64"
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Build and upload a new beta to TestFlight"
+  lane :beta do
+    # Set up App Store Connect API key for authentication
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_content: Base64.decode64(ENV["APP_STORE_CONNECT_API_KEY_BASE64"]),
+      is_key_content_base64: false,
+      duration: 1200,
+      in_house: false
+    )
+
+    # Auto-increment build number based on latest TestFlight build
+    latest_build_number = latest_testflight_build_number(
+      api_key: api_key,
+      app_identifier: "app.rork.wrp2uq48wnow30gaxz5zq"
+    )
+    increment_build_number(
+      build_number: latest_build_number + 1,
+      xcodeproj: "DinnerParty.xcodeproj"
+    )
+
+    # Build the app for App Store distribution
+    build_app(
+      project: "DinnerParty.xcodeproj",
+      scheme: "DinnerParty",
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "./build",
+      output_name: "DinnerParty.ipa",
+      xcargs: [
+        "CODE_SIGN_STYLE=Manual",
+        "DEVELOPMENT_TEAM=#{ENV['DEVELOPMENT_TEAM']}",
+        "CODE_SIGN_IDENTITY=Apple Distribution",
+        "PROVISIONING_PROFILE_SPECIFIER=#{ENV['PROVISIONING_PROFILE_NAME']}"
+      ].join(" ")
+    )
+
+    # Upload to TestFlight
+    upload_to_testflight(
+      api_key: api_key,
+      app_identifier: "app.rork.wrp2uq48wnow30gaxz5zq",
+      skip_waiting_for_build_processing: true
+    )
+  end
+end
