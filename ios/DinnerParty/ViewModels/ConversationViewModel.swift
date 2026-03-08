@@ -7,8 +7,6 @@ final class ConversationViewModel {
     var conversation: Conversation?
     var messages: [VoiceMessage] = []
     var isRecording: Bool = false
-    var recordingDuration: TimeInterval = 0
-    var isPastFiveMinutes: Bool = false
     var hasPendingRecording: Bool = false
     var pendingRecordingDuration: TimeInterval = 0
     var isGeneratingSummary: Bool = false
@@ -33,7 +31,7 @@ final class ConversationViewModel {
         if let existing = try? modelContext.fetch(descriptor).first {
             conversation = existing
         } else {
-            let newConversation = Conversation(participantName: "Friend")
+            let newConversation = Conversation(participantName: Theme.participantFriend)
             modelContext.insert(newConversation)
             conversation = newConversation
         }
@@ -56,19 +54,8 @@ final class ConversationViewModel {
             isRecording = true
             hasPendingRecording = false
             pendingRecordingResult = nil
-            observeRecorder()
         }
         return success
-    }
-
-    private func observeRecorder() {
-        Task {
-            while recorder.isRecording {
-                recordingDuration = recorder.recordingDuration
-                isPastFiveMinutes = recorder.isPastFiveMinutes
-                try? await Task.sleep(for: .milliseconds(100))
-            }
-        }
     }
 
     func stopRecording() {
@@ -78,8 +65,6 @@ final class ConversationViewModel {
             hasPendingRecording = true
         }
         isRecording = false
-        recordingDuration = 0
-        isPastFiveMinutes = false
     }
 
     func cancelRecording() {
@@ -93,8 +78,6 @@ final class ConversationViewModel {
         } else {
             recorder.cancelRecording()
             isRecording = false
-            recordingDuration = 0
-            isPastFiveMinutes = false
         }
     }
 
@@ -105,7 +88,7 @@ final class ConversationViewModel {
 
         let message = VoiceMessage(
             conversationID: conversation.id,
-            senderName: "You",
+            senderName: Theme.participantYou,
             isMine: true,
             duration: result.duration,
             audioFileName: result.fileName
@@ -150,11 +133,5 @@ final class ConversationViewModel {
             }
             isGeneratingSummary = false
         }
-    }
-
-    func formattedDuration(_ duration: TimeInterval) -> String {
-        let mins = Int(duration) / 60
-        let secs = Int(duration) % 60
-        return String(format: "%d:%02d", mins, secs)
     }
 }

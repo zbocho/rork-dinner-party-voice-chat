@@ -1,10 +1,58 @@
-# Fix broken recording UI — timer and stop button
+# Dinner Party — Developer Guide
 
-**Problem**: The recording screen appears but the timer stays at 0:00 and the stop button does nothing. This happens because on the cloud simulator there's no microphone, so recording silently fails but the overlay gets stuck.
+## Architecture
+SwiftUI + SwiftData, MVVM, iOS 18+. Voice messaging app with AI conversation summaries via Rork toolkit API. Includes an iMessage extension.
 
-**Fixes**:
-- Show the recording overlay only when recording actually starts successfully
-- If recording fails (e.g. no microphone permission), show a brief alert explaining the issue instead of a stuck overlay
-- Add a dismiss/close button to the recording overlay so it can never get permanently stuck
-- Make the stop button always dismiss the overlay even if the recorder isn't actively recording (safety fallback)
-- On the simulator, show a friendly message: "Install this app on your device via the Rork App to record audio"
+## File Inventory
+
+### App Entry
+- `DinnerPartyApp.swift` — @main, ModelContainer setup (falls back to in-memory on failure)
+- `ContentView.swift` — Root view, hosts ConversationView
+- `Config.swift` — Environment variables + participant name constants
+
+### Models
+- `Conversation.swift` — @Model: id, participantName, summary, timestamps
+- `VoiceMessage.swift` — @Model: id, conversationID, sender info, duration, audio file reference
+
+### Views
+- `ConversationView.swift` — Main screen: message list, summary card, record button, recording overlay
+- `EmptyStateView.swift` — First-launch empty state with record prompt
+- `RecordButton.swift` — Mic/stop button with pulse animation
+- `RecordingOverlay.swift` — Full-screen recording UI with dismiss button, stop/send/discard actions
+- `VoiceMessageRow.swift` — Individual voice message bubble with playback controls
+- `SummaryCardView.swift` — AI summary display card
+
+### ViewModels
+- `ConversationViewModel.swift` — Recording, playback, message CRUD, summary generation
+
+### Services
+- `AudioRecorderService.swift` — AVAudioRecorder wrapper, @Observable
+- `AudioPlayerService.swift` — AVAudioPlayer wrapper, @Observable, 10Hz progress timer
+- `SummaryService.swift` — Rork toolkit API client for AI summaries
+
+### Utilities
+- `Theme.swift` — Color constants + TimeInterval.formattedMinsSecs extension
+
+### iMessage Extension
+- `MessagesViewController.swift` — MSMessagesAppViewController host
+- `MessagesView.swift` — SwiftUI bridge for iMessage
+
+## Applied Fixes
+- [x] Recording overlay only appears when recording actually starts successfully
+- [x] Microphone unavailable alert shown on simulator instead of stuck overlay
+- [x] Dismiss (X) button added to recording overlay as safety fallback
+- [x] Stop button always dismisses overlay even if recorder isn't active
+- [x] ModelContainer falls back to in-memory instead of fatalError on failure
+- [x] Playback timer reduced from 20Hz to 10Hz
+- [x] Removed redundant recorder polling loop (SwiftUI @Observable handles it)
+- [x] Extracted time formatting into TimeInterval.formattedMinsSecs extension
+- [x] Moved hardcoded participant names into Config constants
+- [x] Summary response parsing: tries JSON decode first, falls back to raw string
+- [x] Removed dead code: unused SummaryService structs/methods, empty MessagesViewController stubs, unused MessagesView properties
+- [x] Fixed pointless ternary in RecordButton
+
+## Remaining Wiring
+- Toolkit URL: Set `EXPO_PUBLIC_TOOLKIT_URL` in project environment variables for AI summaries
+- Code signing: Configure for device builds via Rork App
+- Microphone: `INFOPLIST_KEY_NSMicrophoneUsageDescription` must be set in project.pbxproj
+- iMessage: App Group needed for shared data between host app and extension

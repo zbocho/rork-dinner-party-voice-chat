@@ -49,11 +49,4 @@ class MessagesViewController: MSMessagesAppViewController {
         hostingController = hosting
     }
 
-    override func willTransition(to presentationStyle: MSMessagesAppPresentationStyle) {
-        super.willTransition(to: presentationStyle)
-    }
-
-    override func didTransition(to presentationStyle: MSMessagesAppPresentationStyle) {
-        super.didTransition(to: presentationStyle)
-    }
 }

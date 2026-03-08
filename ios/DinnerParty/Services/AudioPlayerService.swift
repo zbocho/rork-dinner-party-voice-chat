@@ -65,7 +65,7 @@ final class AudioPlayerService: NSObject {
     }
 
     private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor in
                 self.currentTime = self.audioPlayer?.currentTime ?? 0
